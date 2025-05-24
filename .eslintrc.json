@@ -1,0 +1,28 @@
+{
+    "extends": ["airbnb-base", "prettier"],
+    "parser": "@babel/eslint-parser",
+    "parserOptions": {
+        "requireConfigFile": false
+    },
+    "rules": {
+        "indent": "off",
+        "max-len": [
+            "error",
+            120,
+            {
+                "ignoreComments": true,
+                "ignoreUrls": true,
+                "ignoreRegExpLiterals": true
+            }
+        ],
+        "no-console": "off",
+        "no-restricted-syntax": 0,
+        "no-await-in-loop": 0,
+        "template-curly-spacing": "off",
+        "function-paren-newline": 0,
+        "arrow-parens": 0
+    },
+    "globals": {
+        "Bluebird": true
+    }
+}

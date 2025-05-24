@@ -1,0 +1,30 @@
+require('dotenv').config();
+
+const express = require('express');
+
+const cors = require('cors');
+
+const bodyParser = require('body-parser');
+
+const app = express();
+
+const port = process.env.SERVER_PORT || 8080;
+
+const router = require('./routes');
+
+const errorHandler = require('./middleware/errorHandler');
+
+// 目前全開放
+app.use(cors());
+
+app.use(bodyParser.json());
+
+app.use('/', router);
+
+app.set('view engine', 'ejs');
+
+app.use(errorHandler);
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
