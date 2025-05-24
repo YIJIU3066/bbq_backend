@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-const {
-    getPrivateVotingEvents,
-    getPublicVotingEvents,
-    getViewVotePage,
-    putVote
-} = require('../controllers/votingEvent');
-// const getPublicVotingEvents = require('../controllers/VotingEvent/getPublicVotingEvent');
-// const getPrivateVotingEvents = require('../controllers/VotingEvent/getPrivateVotingEvent');
-// const getViewVotePage = require('../controllers/VotingEvent/getviewVotePage');
-// const putVote = require('../controllers/VotingEvent/putVote');
+// const {
+//     getPrivateVotingEvents,
+//     getPublicVotingEvents,
+//     getViewVotePage,
+//     putVote
+// } = require('../controllers/votingEvent');
+
+const getPublicVotingEvents = require('../controllers/VotingEvent/getPublicVotingEvent');
+const getPrivateVotingEvents = require('../controllers/VotingEvent/getPrivateVotingEvent');
+const getViewVotePage = require('../controllers/VotingEvent/getviewVotePage');
+const putVote = require('../controllers/VotingEvent/putVote');
 
 router.get('/public_voting_event/', async (req, res) => {
     try {

@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 
-const { getUserById, updateUser } = require('../controllers/user');
+const getUserById = require('../controllers/User/getUserById');
+const updateUser = require('../controllers/User/updateUser');
 
 const handleResult = (res, result) => {
     if (result.status && result.status !== 200) {

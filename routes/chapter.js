@@ -2,21 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 
-const {
-    createChapter,
-    deleteChapter,
-    getChapter,
-    getAllChapterFromEvent,
-    updateChapter,
-    getChapterCreatorById
-} = require('../controllers/chapter');
-
-// const getChapter = require('../controllers/Chapter/getChapter');
-// const getAllChapterFromEvent = require('../controllers/Chapter/getAllChapterFromEvent');
-// const getChapterCreatorById = require('../controllers/Chapter/getChapterCreatorById');
-// const createChapter = require('../controllers/Chapter/createChapter');
-// const updateChapter = require('../controllers/Chapter/updateChapter');
-// const deleteChapter = require('../controllers/Chapter/deleteChapter');
+const getChapter = require('../controllers/Chapter/getChapter');
+const getAllChapterFromEvent = require('../controllers/Chapter/getAllChapterFromEvent');
+const getChapterCreatorById = require('../controllers/Chapter/getChapterCreatorById');
+const createChapter = require('../controllers/Chapter/createChapter');
+const updateChapter = require('../controllers/Chapter/updateChapter');
+const deleteChapter = require('../controllers/Chapter/deleteChapter');
 
 const handleResult = (res, result) => {
     if (result.status && result.status !== 200) {

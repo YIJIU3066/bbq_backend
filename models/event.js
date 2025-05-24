@@ -16,10 +16,11 @@ exports.getEventCreatorById = async ({ eId }) => {
             .first();
         return event ? event.creatorId : null;
     } catch (error) {
-        throw new Error(
-            'Failed to get event creator',
-            error
-        );
+        return {
+            status: 400,
+            error: `Failed to get event creator ${error}`
+        };
+        // throw new Error('Failed to get event creator', error);
     }
 };
 
@@ -61,9 +62,7 @@ exports.getEvent = async ({ eId }) => {
                 .andWhere('isCreator', false);
 
             if (users.length > 0) {
-                const userIds = users.map(
-                    (user) => user.uId
-                );
+                const userIds = users.map((user) => user.uId);
 
                 const userInfoList = await trx(USER_TABLE)
                     .select('*')
@@ -87,12 +86,7 @@ exports.getAllEvent = async ({ userId, eventStatus }) => {
     return await datastore.transaction(async (trx) => {
         try {
             const lastChapter = trx(CHAPTER_TABLE)
-                .select(
-                    'eId',
-                    trx.raw(
-                        'MAX(pageNumber) as maxPageNumber'
-                    )
-                )
+                .select('eId', trx.raw('MAX(pageNumber) as maxPageNumber'))
                 .groupBy('eId')
                 .as('lc');
 
@@ -108,18 +102,9 @@ exports.getAllEvent = async ({ userId, eventStatus }) => {
                         '=',
                         `${EVENT_TABLE}.eId`
                     )
-                    .join(
-                        lastChapter,
-                        'lc.eId',
-                        '=',
-                        `${EVENT_TABLE}.eId`
-                    )
+                    .join(lastChapter, 'lc.eId', '=', `${EVENT_TABLE}.eId`)
                     .join(CHAPTER_TABLE, function () {
-                        this.on(
-                            'lc.eId',
-                            '=',
-                            `${CHAPTER_TABLE}.eId`
-                        ).andOn(
+                        this.on('lc.eId', '=', `${CHAPTER_TABLE}.eId`).andOn(
                             'lc.maxPageNumber',
                             '=',
                             `${CHAPTER_TABLE}.pageNumber`
@@ -127,8 +112,7 @@ exports.getAllEvent = async ({ userId, eventStatus }) => {
                     })
                     .where({
                         [`${InEVENT_TABLE}.uId`]: userId,
-                        [`${CHAPTER_TABLE}.chapterStatus`]:
-                            eventStatus
+                        [`${CHAPTER_TABLE}.chapterStatus`]: eventStatus
                     })
                     // 公開活動
                     .union(
@@ -141,10 +125,7 @@ exports.getAllEvent = async ({ userId, eventStatus }) => {
                                     'eId',
                                     trx(CHAPTER_TABLE)
                                         .select('eId')
-                                        .where(
-                                            'chapterStatus',
-                                            eventStatus
-                                        )
+                                        .where('chapterStatus', eventStatus)
                                         .groupBy('eId')
                                 );
                             })
@@ -162,19 +143,14 @@ exports.getAllEvent = async ({ userId, eventStatus }) => {
                     )
                     .where(`${InEVENT_TABLE}.uId`, userId)
                     .union(
-                        trx
-                            .select('*')
-                            .from(EVENT_TABLE)
-                            .whereNull('eventKey')
+                        trx.select('*').from(EVENT_TABLE).whereNull('eventKey')
                     );
             }
 
             if (events.length > 0) {
                 // 加上使用者資料
                 for (const event of events) {
-                    const creatorInfo = await trx(
-                        USER_TABLE
-                    )
+                    const creatorInfo = await trx(USER_TABLE)
                         .select('*')
                         .where('uId', event.creatorId)
                         .first();
@@ -186,26 +162,14 @@ exports.getAllEvent = async ({ userId, eventStatus }) => {
                     }
 
                     // 獲取最後一章的時間
-                    const lastChapterInfo = await trx(
-                        CHAPTER_TABLE
-                    )
-                        .select(
-                            'createTime',
-                            'submitTime',
-                            'voteTime'
-                        )
+                    const lastChapterInfo = await trx(CHAPTER_TABLE)
+                        .select('createTime', 'submitTime', 'voteTime')
                         .where('eId', event.eId)
-                        .andWhere(
-                            'pageNumber',
-                            function () {
-                                this.select('maxPageNumber')
-                                    .from(lastChapter)
-                                    .where(
-                                        'eId',
-                                        event.eId
-                                    );
-                            }
-                        )
+                        .andWhere('pageNumber', function () {
+                            this.select('maxPageNumber')
+                                .from(lastChapter)
+                                .where('eId', event.eId);
+                        })
                         .first();
 
                     delete event.creatorId;
@@ -230,12 +194,7 @@ exports.getAllPublicEvent = async ({ eventStatus }) => {
     return await datastore.transaction(async (trx) => {
         try {
             const lastChapter = trx(CHAPTER_TABLE)
-                .select(
-                    'eId',
-                    trx.raw(
-                        'MAX(pageNumber) as maxPageNumber'
-                    )
-                )
+                .select('eId', trx.raw('MAX(pageNumber) as maxPageNumber'))
                 .groupBy('eId')
                 .as('lc');
 
@@ -251,10 +210,7 @@ exports.getAllPublicEvent = async ({ eventStatus }) => {
                             'eId',
                             trx(CHAPTER_TABLE)
                                 .select('eId')
-                                .where(
-                                    'chapterStatus',
-                                    eventStatus
-                                )
+                                .where('chapterStatus', eventStatus)
                                 .groupBy('eId')
                         );
                     });
@@ -271,9 +227,7 @@ exports.getAllPublicEvent = async ({ eventStatus }) => {
             if (events.length > 0) {
                 // 加上使用者資料
                 for (const event of events) {
-                    const creatorInfo = await trx(
-                        USER_TABLE
-                    )
+                    const creatorInfo = await trx(USER_TABLE)
                         .select('*')
                         .where('uId', event.creatorId)
                         .first();
@@ -285,26 +239,14 @@ exports.getAllPublicEvent = async ({ eventStatus }) => {
                     }
 
                     // 獲取最後一章的時間
-                    const lastChapterInfo = await trx(
-                        CHAPTER_TABLE
-                    )
-                        .select(
-                            'createTime',
-                            'submitTime',
-                            'voteTime'
-                        )
+                    const lastChapterInfo = await trx(CHAPTER_TABLE)
+                        .select('createTime', 'submitTime', 'voteTime')
                         .where('eId', event.eId)
-                        .andWhere(
-                            'pageNumber',
-                            function () {
-                                this.select('maxPageNumber')
-                                    .from(lastChapter)
-                                    .where(
-                                        'eId',
-                                        event.eId
-                                    );
-                            }
-                        )
+                        .andWhere('pageNumber', function () {
+                            this.select('maxPageNumber')
+                                .from(lastChapter)
+                                .where('eId', event.eId);
+                        })
                         .first();
 
                     delete event.creatorId;
@@ -330,12 +272,7 @@ exports.getMyAllEvent = async ({ userId, eventStatus }) => {
         try {
             // 最後一章
             const lastChapter = trx(CHAPTER_TABLE)
-                .select(
-                    'eId',
-                    trx.raw(
-                        'MAX(pageNumber) as maxPageNumber'
-                    )
-                )
+                .select('eId', trx.raw('MAX(pageNumber) as maxPageNumber'))
                 .groupBy('eId')
                 .as('lc');
 
@@ -351,18 +288,9 @@ exports.getMyAllEvent = async ({ userId, eventStatus }) => {
                         '=',
                         `${EVENT_TABLE}.eId`
                     )
-                    .join(
-                        lastChapter,
-                        'lc.eId',
-                        '=',
-                        `${EVENT_TABLE}.eId`
-                    )
+                    .join(lastChapter, 'lc.eId', '=', `${EVENT_TABLE}.eId`)
                     .join(CHAPTER_TABLE, function () {
-                        this.on(
-                            'lc.eId',
-                            '=',
-                            `${CHAPTER_TABLE}.eId`
-                        ).andOn(
+                        this.on('lc.eId', '=', `${CHAPTER_TABLE}.eId`).andOn(
                             'lc.maxPageNumber',
                             '=',
                             `${CHAPTER_TABLE}.pageNumber`
@@ -370,8 +298,7 @@ exports.getMyAllEvent = async ({ userId, eventStatus }) => {
                     })
                     .where({
                         [`${InEVENT_TABLE}.uId`]: userId,
-                        [`${CHAPTER_TABLE}.chapterStatus`]:
-                            eventStatus
+                        [`${CHAPTER_TABLE}.chapterStatus`]: eventStatus
                     });
             } else {
                 // 沒有設定 event status
@@ -390,9 +317,7 @@ exports.getMyAllEvent = async ({ userId, eventStatus }) => {
             if (events.length > 0) {
                 // 加上使用者資料
                 for (const event of events) {
-                    const creatorInfo = await trx(
-                        USER_TABLE
-                    )
+                    const creatorInfo = await trx(USER_TABLE)
                         .select('*')
                         .where('uId', event.creatorId)
                         .first();
@@ -404,26 +329,14 @@ exports.getMyAllEvent = async ({ userId, eventStatus }) => {
                     }
 
                     // 獲取最後一章的時間
-                    const lastChapterInfo = await trx(
-                        CHAPTER_TABLE
-                    )
-                        .select(
-                            'createTime',
-                            'submitTime',
-                            'voteTime'
-                        )
+                    const lastChapterInfo = await trx(CHAPTER_TABLE)
+                        .select('createTime', 'submitTime', 'voteTime')
                         .where('eId', event.eId)
-                        .andWhere(
-                            'pageNumber',
-                            function () {
-                                this.select('maxPageNumber')
-                                    .from(lastChapter)
-                                    .where(
-                                        'eId',
-                                        event.eId
-                                    );
-                            }
-                        )
+                        .andWhere('pageNumber', function () {
+                            this.select('maxPageNumber')
+                                .from(lastChapter)
+                                .where('eId', event.eId);
+                        })
                         .first();
 
                     delete event.creatorId;
@@ -447,12 +360,7 @@ exports.getAllCreatedEvent = async ({ userId }) => {
     return await datastore.transaction(async (trx) => {
         try {
             const lastChapter = trx(CHAPTER_TABLE)
-                .select(
-                    'eId',
-                    trx.raw(
-                        'MAX(pageNumber) as maxPageNumber'
-                    )
-                )
+                .select('eId', trx.raw('MAX(pageNumber) as maxPageNumber'))
                 .groupBy('eId')
                 .as('lc');
 
@@ -466,17 +374,12 @@ exports.getAllCreatedEvent = async ({ userId }) => {
                     `${EVENT_TABLE}.eId`
                 )
                 .where(`${InEVENT_TABLE}.uId`, userId)
-                .andWhere(
-                    `${InEVENT_TABLE}.isCreator`,
-                    true
-                );
+                .andWhere(`${InEVENT_TABLE}.isCreator`, true);
 
             if (events.length > 0) {
                 // 加上使用者資料
                 for (const event of events) {
-                    const creatorInfo = await trx(
-                        USER_TABLE
-                    )
+                    const creatorInfo = await trx(USER_TABLE)
                         .select('*')
                         .where('uId', event.creatorId)
                         .first();
@@ -488,26 +391,14 @@ exports.getAllCreatedEvent = async ({ userId }) => {
                     }
 
                     // 獲取最後一章的時間
-                    const lastChapterInfo = await trx(
-                        CHAPTER_TABLE
-                    )
-                        .select(
-                            'createTime',
-                            'submitTime',
-                            'voteTime'
-                        )
+                    const lastChapterInfo = await trx(CHAPTER_TABLE)
+                        .select('createTime', 'submitTime', 'voteTime')
                         .where('eId', event.eId)
-                        .andWhere(
-                            'pageNumber',
-                            function () {
-                                this.select('maxPageNumber')
-                                    .from(lastChapter)
-                                    .where(
-                                        'eId',
-                                        event.eId
-                                    );
-                            }
-                        )
+                        .andWhere('pageNumber', function () {
+                            this.select('maxPageNumber')
+                                .from(lastChapter)
+                                .where('eId', event.eId);
+                        })
                         .first();
 
                     delete event.creatorId;
@@ -531,19 +422,11 @@ exports.getAllUploadedEvent = async ({ userId }) => {
     return await datastore.transaction(async (trx) => {
         try {
             const lastChapter = trx(CHAPTER_TABLE)
-                .select(
-                    'eId',
-                    trx.raw(
-                        'MAX(pageNumber) as maxPageNumber'
-                    )
-                )
+                .select('eId', trx.raw('MAX(pageNumber) as maxPageNumber'))
                 .groupBy('eId')
                 .as('lc');
             const events = await trx
-                .select(
-                    `${EVENT_TABLE}.*`,
-                    `${InEVENT_TABLE}.pageCount`
-                )
+                .select(`${EVENT_TABLE}.*`, `${InEVENT_TABLE}.pageCount`)
                 .from(EVENT_TABLE)
                 .join(
                     InEVENT_TABLE,
@@ -552,18 +435,12 @@ exports.getAllUploadedEvent = async ({ userId }) => {
                     `${EVENT_TABLE}.eId`
                 )
                 .where(`${InEVENT_TABLE}.uId`, userId)
-                .andWhere(
-                    `${InEVENT_TABLE}.pageCount`,
-                    '>',
-                    '0'
-                );
+                .andWhere(`${InEVENT_TABLE}.pageCount`, '>', '0');
 
             if (events.length > 0) {
                 // 加上使用者資料
                 for (const event of events) {
-                    const creatorInfo = await trx(
-                        USER_TABLE
-                    )
+                    const creatorInfo = await trx(USER_TABLE)
                         .select('*')
                         .where('uId', event.creatorId)
                         .first();
@@ -575,26 +452,14 @@ exports.getAllUploadedEvent = async ({ userId }) => {
                     }
 
                     // 獲取最後一章的時間
-                    const lastChapterInfo = await trx(
-                        CHAPTER_TABLE
-                    )
-                        .select(
-                            'createTime',
-                            'submitTime',
-                            'voteTime'
-                        )
+                    const lastChapterInfo = await trx(CHAPTER_TABLE)
+                        .select('createTime', 'submitTime', 'voteTime')
                         .where('eId', event.eId)
-                        .andWhere(
-                            'pageNumber',
-                            function () {
-                                this.select('maxPageNumber')
-                                    .from(lastChapter)
-                                    .where(
-                                        'eId',
-                                        event.eId
-                                    );
-                            }
-                        )
+                        .andWhere('pageNumber', function () {
+                            this.select('maxPageNumber')
+                                .from(lastChapter)
+                                .where('eId', event.eId);
+                        })
                         .first();
 
                     delete event.creatorId;
@@ -700,9 +565,7 @@ exports.addUserToEvent = async ({ eventKey, uId }) => {
                     msg: `User id ${uId} already in event id ${event.eId}`
                 };
             } else {
-                let result = await trx(
-                    InEVENT_TABLE
-                ).insert({
+                let result = await trx(InEVENT_TABLE).insert({
                     eId: event.eId,
                     uId: uId,
                     isCreator: false,
@@ -755,15 +618,21 @@ exports.updateEvent = ({
 exports.updateViewCount = async ({ eId }) => {
     return await datastore.transaction(async (trx) => {
         try {
-            let event = await trx(EVENT_TABLE)
-                .where('eId', eId)
-                .first();
+            let event = await trx(EVENT_TABLE).where('eId', eId).first();
 
             if (!event) {
-                throw new Error('Event not found');
+                return {
+                    status: 404,
+                    error: `Event ${eId} not found`
+                };
+                // throw new Error('Event not found');
             }
             if (event.isPublish === 0) {
-                throw new Error('Event is not published');
+                return {
+                    status: 403,
+                    error: `Event ${eId} is not published`
+                };
+                // throw new Error('Event is not published');
             }
 
             const result = await trx(EVENT_TABLE)
@@ -787,43 +656,29 @@ exports.updateViewCount = async ({ eId }) => {
 // Delete
 exports.deleteEvent = async ({ eId }) => {
     try {
-        const result = await datastore.transaction(
-            async (trx) => {
-                // 獲得對應 chapter 中的資料
-                const chapters = await trx(
-                    CHAPTER_TABLE
-                ).where('eId', eId);
+        const result = await datastore.transaction(async (trx) => {
+            // 獲得對應 chapter 中的資料
+            const chapters = await trx(CHAPTER_TABLE).where('eId', eId);
 
-                // 刪除 page 中對應的資料
-                for (const chapter of chapters) {
-                    await trx(PAGE_TABLE)
-                        .where('cId', chapter.cId)
-                        .del();
-                }
-
-                // 刪除 userInEvent 中對應的資料
-                await trx(InEVENT_TABLE)
-                    .where('eId', eId)
-                    .del();
-
-                // 刪除 userVotePage 的資料
-                await trx(VOTE_TABLE)
-                    .where('eId', eId)
-                    .del();
-
-                // 刪除 chapter 中對應的資料
-                await trx(CHAPTER_TABLE)
-                    .where('eId', eId)
-                    .del();
-
-                // 刪除 EVENT_TABLE 中的資料
-                const resultEvent = await trx(EVENT_TABLE)
-                    .where('eId', eId)
-                    .del();
-
-                return resultEvent;
+            // 刪除 page 中對應的資料
+            for (const chapter of chapters) {
+                await trx(PAGE_TABLE).where('cId', chapter.cId).del();
             }
-        );
+
+            // 刪除 userInEvent 中對應的資料
+            await trx(InEVENT_TABLE).where('eId', eId).del();
+
+            // 刪除 userVotePage 的資料
+            await trx(VOTE_TABLE).where('eId', eId).del();
+
+            // 刪除 chapter 中對應的資料
+            await trx(CHAPTER_TABLE).where('eId', eId).del();
+
+            // 刪除 EVENT_TABLE 中的資料
+            const resultEvent = await trx(EVENT_TABLE).where('eId', eId).del();
+
+            return resultEvent;
+        });
 
         return {
             data: result

@@ -2,14 +2,13 @@ const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
-const {
-    getPage,
-    getAllPageFromChapter,
-    getPageCreatorById,
-    deletePage,
-    postPage,
-    updatePage
-} = require('../controllers/page');
+
+const getPage = require('../controllers/Page/getPage');
+const getAllPageFromChapter = require('../controllers/Page/getAllPageFromChapter');
+const getPageCreatorById = require('../controllers/Page/getPageCreatorById');
+const deletePage = require('../controllers/Page/deletePage');
+const postPage = require('../controllers/Page/postPage');
+const updatePage = require('../controllers/Page/updatePage');
 
 // Configure Multer to store uploaded files in memory
 const storage = multer.memoryStorage();

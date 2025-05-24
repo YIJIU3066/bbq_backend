@@ -4,10 +4,9 @@
 
 
 ### TODO
-- Unified handling of errors
-- Voting Event
 - User
 - Login
+- Test
 
 ### Add Env
 Please add `.env` file in root.

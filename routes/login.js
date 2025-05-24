@@ -13,7 +13,7 @@ router.get('/testHomePage', (req, res) => {
     //console.log(req.originalUrl);
 });
 */
-//登入頁面範例
+//登入頁面
 router.get('/login', (req, res) => {
     const loginPageHtml = `
         <!DOCTYPE html>
