@@ -2,7 +2,10 @@ module.exports = (req, res, next) => {
     // console.log('[Middleware] handleResult');
     const result = res.locals.result;
     if (!result) {
-        return next(new Error('Response result not found'));
+        return res.status(404).json({
+            error: 'Not Found',
+            message: result?.error || 'Requested resource not found'
+        });
     }
 
     if (result.status && result.status !== 200) {

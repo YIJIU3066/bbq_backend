@@ -15,26 +15,22 @@ exports.getPageCreatorById = async ({ pId }) => {
             .first();
         return page ? page.uId : null;
     } catch (error) {
-        throw new Error(
-            'Failed to get page creator',
-            error
-        );
+        throw new Error('Failed to get page creator', error);
     }
 };
 
 exports.getPage = async ({ pId }) => {
     return await datastore.transaction(async (trx) => {
         try {
-            let page = await trx
+            const page = await trx(PAGE_TABLE)
                 .select('*')
-                .from(PAGE_TABLE)
                 .where('pId', pId)
                 .first();
 
             if (!page) {
                 return {
                     status: 404,
-                    error: 'Page not found'
+                    error: `Page ${pId} not found`
                 };
             }
 
@@ -56,11 +52,11 @@ exports.getPage = async ({ pId }) => {
             page.user = creatorInfo;
 
             return page;
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error(error);
             return {
-                status: 500,
-                error: err.message
+                status: 400,
+                error: error.message
             };
         }
     });
@@ -69,9 +65,7 @@ exports.getPage = async ({ pId }) => {
 exports.getAllPageFromChapter = async ({ cId }) => {
     return await datastore.transaction(async (trx) => {
         try {
-            const pages = await trx(PAGE_TABLE)
-                .select('*')
-                .where('cId', cId);
+            const pages = await trx(PAGE_TABLE).select('*').where('cId', cId);
 
             if (pages.length > 0) {
                 for (const page of pages) {
@@ -118,9 +112,7 @@ exports.postPage = async ({
 }) => {
     return await datastore.transaction(async (trx) => {
         try {
-            const pageInsertResult = await trx(
-                PAGE_TABLE
-            ).insert({
+            const pageInsertResult = await trx(PAGE_TABLE).insert({
                 uId: uId,
                 cId: cId,
                 textContent: textContent,
@@ -138,12 +130,10 @@ exports.postPage = async ({
             if (event.length > 0) {
                 const eId = event[0].eId;
 
-                const exists = await trx(InEVENT_TABLE)
-                    .select('*')
-                    .where({
-                        eId: eId,
-                        uId: uId
-                    });
+                const exists = await trx(InEVENT_TABLE).select('*').where({
+                    eId: eId,
+                    uId: uId
+                });
 
                 if (exists.length <= 0) {
                     await trx(InEVENT_TABLE).insert({
@@ -208,53 +198,44 @@ exports.updatePage = ({
 // Delete
 exports.deletePage = async ({ pId }) => {
     try {
-        const result = await datastore.transaction(
-            async (trx) => {
-                // 獲得頁面資訊
-                const pageInfo = await trx(PAGE_TABLE)
-                    .select('*')
-                    .where('pId', pId);
+        const result = await datastore.transaction(async (trx) => {
+            // 獲得頁面資訊
+            const pageInfo = await trx(PAGE_TABLE)
+                .select('*')
+                .where('pId', pId);
 
-                // 獲得頁面屬於的章節資訊
-                const chapterInfo = await trx(CHAPTER_TABLE)
-                    .select('*')
-                    .where('cId', pageInfo[0].cId);
+            // 獲得頁面屬於的章節資訊
+            const chapterInfo = await trx(CHAPTER_TABLE)
+                .select('*')
+                .where('cId', pageInfo[0].cId);
 
-                const eId = chapterInfo[0].eId;
+            const eId = chapterInfo[0].eId;
 
-                const linkedPages = await trx(
-                    PAGE_TABLE
-                ).where('cId', cId);
+            const linkedPages = await trx(PAGE_TABLE).where('cId', cId);
 
-                const arrayOfLinkedPageIds =
-                    linkedPages.map((page) => page.pId);
+            const arrayOfLinkedPageIds = linkedPages.map((page) => page.pId);
 
-                // 更新事件參與者的頁面計數
-                await trx(InEVENT_TABLE)
-                    .where('eId', eId)
-                    .andWhereNot('isCreator', true)
-                    .decrement('pageCount', 1);
+            // 更新事件參與者的頁面計數
+            await trx(InEVENT_TABLE)
+                .where('eId', eId)
+                .andWhereNot('isCreator', true)
+                .decrement('pageCount', 1);
 
-                // 刪除參與者中不是創建者且頁面計數為 0 的項目
-                await trx(InEVENT_TABLE)
-                    .where('eId', eId)
-                    .andWhereNot('isCreator', true)
-                    .andWhere('pageCount', 0)
-                    .del();
+            // 刪除參與者中不是創建者且頁面計數為 0 的項目
+            await trx(InEVENT_TABLE)
+                .where('eId', eId)
+                .andWhereNot('isCreator', true)
+                .andWhere('pageCount', 0)
+                .del();
 
-                // 刪除 Vote
-                await trx(VOTE_TABLE)
-                    .whereIn('pId', arrayOfLinkedPageIds)
-                    .del();
+            // 刪除 Vote
+            await trx(VOTE_TABLE).whereIn('pId', arrayOfLinkedPageIds).del();
 
-                // 刪除頁面
-                const pageDelete = await trx(PAGE_TABLE)
-                    .where('pId', pId)
-                    .del();
+            // 刪除頁面
+            const pageDelete = await trx(PAGE_TABLE).where('pId', pId).del();
 
-                return pageDelete;
-            }
-        );
+            return pageDelete;
+        });
         return {
             data: result
         };
