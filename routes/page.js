@@ -26,17 +26,12 @@ const checkUser = async (req, res) => {
 
     const pageCreator = await getPageCreatorById({ pId });
 
-    if (pageCreator) {
-        if (pageCreator !== userId) {
-            res.status(403).json({ error: 'Forbidden' });
-            return false;
-        }
-        return true;
-    } else {
-        res.status(403).json({
-            error: 'Page not found'
-        });
-        return false;
+    if (!pageCreator) {
+        return next({ status: 404, message: 'Page not found' });
+    }
+
+    if (pageCreator !== userId) {
+        return next({ status: 403, message: 'Forbidden' });
     }
 };
 
@@ -71,14 +66,8 @@ router.post(
         try {
             res.locals.result = await postPage(req);
             next();
-            // const result = await postPage(req);
-            // handleResult(res, result);
         } catch (error) {
             next(error);
-            // console.error(error);
-            // res.status(500).json({
-            //     error: 'Internal Server Error'
-            // });
         }
     }
 );
@@ -93,17 +82,7 @@ router.put(
         try {
             res.locals.result = await updatePage(req);
             next();
-            // const hasPermission = await checkUser(req, res);
-            // if (!hasPermission) {
-            //     return;
-            // }
-            // const result = await updatePage(req);
-            // handleResult(res, result);
         } catch (error) {
-            // console.error(error);
-            // res.status(500).json({
-            //     error: 'Internal Server Error'
-            // });
             next(error);
         }
     }
@@ -112,23 +91,11 @@ router.put(
 // 刪除投稿頁面
 router.delete('/page/:page_id', auth, checkUser, async (req, res, next) => {
     try {
-        // const hasPermission = await checkUser(req, res);
-        // if (!hasPermission) {
-        //     return;
-        // }
-        // const result = await deletePage(req);
-        // handleResult(res, result);
         res.locals.result = await deletePage(req);
         next();
     } catch (error) {
-        // console.error(error);
-        // res.status(500).json({
-        //     error: 'Internal Sever Error'
-        // });
         next(error);
     }
 });
-
-// router.use(handleResult);
 
 module.exports = router;
