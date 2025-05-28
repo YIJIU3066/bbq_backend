@@ -17,8 +17,6 @@ const clientId = process.env.GOOGLE_CLIENT_ID;
 const secret = process.env.GOOGLE_CLIENT_SECRET;
 const redirectUrl = process.env.GOOGLE_API_REDIRECT;
 
-// https://yeeeeees.medium.com/user-authentication-with-node-js-jwt-and-google-oauth-2-0-backend-cookbook-5-e54f40dce0e5
-
 const getGoogleLoginUrl = async (req, res) => {
     const {
         client_url: clientUrl = 'https://www.google.com.tw/'

@@ -1,9 +1,13 @@
 const jwt = require('jsonwebtoken');
-const config = require('config');
+// const config = require('config');
 
-const {
-    auth: { jwtSecret, accessTokenExpiredTime, refreshTokenExpiredTime }
-} = config;
+// const {
+//     auth: { jwtSecret, accessTokenExpiredTime, refreshTokenExpiredTime }
+// } = config;
+
+const jwtSecret = process.env.JWT_SECRET;
+const accessTokenExpiredTime = process.env.ACCESS_TOKEN_EXPIRED_TIME;
+const refreshTokenExpiredTime = process.env.REFRESH_TOKEN_EXPIRED_TIME;
 
 // 產生 Access token
 // data 是要存進 token 裡的 payload（例如使用者 ID）。
