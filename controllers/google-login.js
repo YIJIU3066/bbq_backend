@@ -1,6 +1,6 @@
 const axios = require('axios');
 const querystring = require('querystring');
-const config = require('config');
+// const config = require('config');
 const moment = require('moment-timezone');
 
 const { google } = require('googleapis');
@@ -13,12 +13,11 @@ const {
 const { saveProfilePicture } = require('../utils/avatar');
 
 const User = require('../models/user');
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const secret = process.env.GOOGLE_CLIENT_SECRET;
+const redirectUrl = process.env.GOOGLE_API_REDIRECT;
 
-const {
-    auth: {
-        google: { redirectUrl, clientId, secret }
-    }
-} = config;
+// https://yeeeeees.medium.com/user-authentication-with-node-js-jwt-and-google-oauth-2-0-backend-cookbook-5-e54f40dce0e5
 
 const getGoogleLoginUrl = async (req, res) => {
     const {
@@ -27,11 +26,7 @@ const getGoogleLoginUrl = async (req, res) => {
     } = req.query;
     const decodedUrl = querystring.unescape(clientUrl);
 
-    const oauth2Client = new google.auth.OAuth2(
-        clientId,
-        secret,
-        redirectUrl
-    );
+    const oauth2Client = new google.auth.OAuth2(clientId, secret, redirectUrl);
 
     const scopes = [
         'https://www.googleapis.com/auth/userinfo.email',
@@ -53,7 +48,7 @@ const googleLoginHandler = async (req, res) => {
         // state: clientUrl
     } = req.query;
     const decodedUrl = querystring.unescape(clientUrl);
-
+    console.log('decodedUrl', decodedUrl);
     try {
         const response = await axios.post(
             'https://www.googleapis.com/oauth2/v4/token',
@@ -77,7 +72,7 @@ const googleLoginHandler = async (req, res) => {
 
         const data = ticket.getPayload();
         const id = ticket.getUserId();
-        // console.log(data);
+        console.log(data);
         let { email, name, picture } = data || {};
 
         const url = new URL(decodedUrl);
@@ -155,9 +150,7 @@ const googleLoginHandler = async (req, res) => {
         url.searchParams.set('name', name);
         url.searchParams.set('login_type', type);
 
-        console.log(
-            `User id ${userId}, email ${email} has login success`
-        );
+        console.log(`User id ${userId}, email ${email} has login success`);
 
         res.redirect(url.toString());
     } catch (error) {

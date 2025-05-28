@@ -47,8 +47,6 @@ const checkUser = async (req, res, next) => {
 
 // 獲得某活動資訊
 router.get('/event/:event_id', async (req, res, next) => {
-    console.log('[Router] Request URL:', req.originalUrl);
-
     try {
         res.locals.result = await getEvent(req);
         next();

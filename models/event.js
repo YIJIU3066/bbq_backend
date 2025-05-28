@@ -215,13 +215,11 @@ exports.getAllPublicEvent = async ({ eventStatus }) => {
                         );
                     });
             } else {
-                console.log('here');
                 // 沒有設定 eventStatus
                 events = await trx
                     .select('*')
                     .from(EVENT_TABLE)
                     .whereNull('eventKey');
-                console.log(events);
             }
 
             if (events.length > 0) {
@@ -527,8 +525,8 @@ exports.createEvent = async ({
             });
 
             return {
-                eventData: event[0],
-                chapterData: chapter[0]
+                eventId: event[0],
+                chapterId: chapter[0]
             };
         } catch (error) {
             return {
@@ -583,7 +581,7 @@ exports.addUserToEvent = async ({ eventKey, uId }) => {
 };
 
 // Update
-exports.updateEvent = ({
+exports.updateEvent = async ({
     eId,
     eventTitle,
     eventIntro,
@@ -593,25 +591,27 @@ exports.updateEvent = ({
     viewCount,
     eventImage
 }) => {
-    let event = datastore
-        .from(EVENT_TABLE)
-        .where('eId', eId)
-        .update({
-            eventTitle,
-            eventIntro,
-            eventKey,
-            totalChapterNum,
-            isPublish,
-            viewCount,
-            eventImage
-        })
-        .then((result) => ({
-            data: result
-        }))
-        .catch((err) => ({
-            error: err
-        }));
-    return event;
+    try {
+        const result = await datastore
+            .from(EVENT_TABLE)
+            .where('eId', eId)
+            .update({
+                eventTitle,
+                eventIntro,
+                eventKey,
+                totalChapterNum,
+                isPublish,
+                viewCount,
+                eventImage
+            });
+
+        return { data: result };
+    } catch (error) {
+        return {
+            status: 400,
+            error: error.message
+        };
+    }
 };
 
 // 更新活動觀看數
@@ -660,16 +660,19 @@ exports.deleteEvent = async ({ eId }) => {
             // 獲得對應 chapter 中的資料
             const chapters = await trx(CHAPTER_TABLE).where('eId', eId);
 
-            // 刪除 page 中對應的資料
+            // 刪除 page,  userVotePage 中對應的資料
             for (const chapter of chapters) {
+                const pages = await trx(PAGE_TABLE).where('cId', chapter.cId);
+
+                for (const page of pages) {
+                    await trx(VOTE_TABLE).where('pageId', page.pageId).del();
+                }
+
                 await trx(PAGE_TABLE).where('cId', chapter.cId).del();
             }
 
             // 刪除 userInEvent 中對應的資料
             await trx(InEVENT_TABLE).where('eId', eId).del();
-
-            // 刪除 userVotePage 的資料
-            await trx(VOTE_TABLE).where('eId', eId).del();
 
             // 刪除 chapter 中對應的資料
             await trx(CHAPTER_TABLE).where('eId', eId).del();
@@ -681,6 +684,7 @@ exports.deleteEvent = async ({ eId }) => {
         });
 
         return {
+            status: 200,
             data: result
         };
     } catch (error) {
